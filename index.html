@@ -18,11 +18,11 @@
             align-items: center;
         }
 
-        /* Container 3:4 Sebenarnya */
+        /* Container 3:4 Tegak (Portrait) */
         #camera-wrapper {
-            width: 100%;
-            aspect-ratio: 3 / 4;
-            max-height: 75vh;
+            width: 100vw;
+            height: calc(100vw * 4 / 3); 
+            max-height: 80vh;
             position: relative;
             background: #111;
             overflow: hidden;
@@ -34,7 +34,6 @@
         video {
             width: 100%;
             height: 100%;
-            /* Menggunakan fill agar sensor asli dipaksa masuk ke kotak 3:4 */
             object-fit: fill; 
         }
 
@@ -45,23 +44,20 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 100;
         }
 
         #snap {
-            width: 80px;
-            height: 80px;
+            width: 75px;
+            height: 75px;
             border-radius: 50%;
-            border: 6px solid #fff;
+            border: 5px solid #fff;
             background: #ff4444;
             cursor: pointer;
-            box-shadow: 0 0 20px rgba(255, 68, 68, 0.4);
-            /* Memastikan area sentuh aktif */
-            pointer-events: auto; 
-            -webkit-tap-highlight-color: transparent;
+            box-shadow: 0 0 15px rgba(255, 68, 68, 0.4);
+            pointer-events: auto;
         }
 
-        #snap:active { transform: scale(0.9); background: #cc0000; }
+        #snap:active { transform: scale(0.9); }
         canvas { display: none; }
     </style>
 </head>
@@ -83,7 +79,7 @@
     const snap = document.getElementById('snap');
 
     async function init() {
-        // Meminta resolusi sensor 3:4 yang luas
+        // Minta resolusi 3:4 Portrait (Lebar < Tinggi)
         const constraints = {
             video: {
                 facingMode: "user",
@@ -102,15 +98,10 @@
         }
     }
 
-    // Perbaikan fungsi tombol jepret
-    snap.onclick = function(e) {
-        e.preventDefault();
+    snap.onclick = function() {
         const context = canvas.getContext('2d');
-        
-        // Ambil resolusi asli dari aliran video
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-        
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         
         const imgData = canvas.toDataURL('image/png');
@@ -123,7 +114,6 @@
         document.body.removeChild(link);
     };
 
-    // Pastikan inisialisasi jalan setelah halaman siap
     window.onload = init;
 </script>
 </body>
