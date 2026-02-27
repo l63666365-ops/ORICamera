@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ORICamera</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            background: #000; 
+            color: white; 
+            font-family: sans-serif; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+        }
+
+        /* Bingkai Kamera 3:4 */
+        .camera-box {
+            position: relative;
+            width: 100vw;
+            aspect-ratio: 3 / 4;
+            max-height: 80vh;
+            overflow: hidden;
+            background: #111;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        video, #photo-result {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(1); /* Tetap asli non-mirror */
+        }
+
+        #photo-result {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 5;
+        }
+
+        /* UI Kontrol */
+        .controls {
+            flex: 1;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+            gap: 30px;
+        }
+
+        .btn-snap {
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            border: 5px solid white;
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 75, 43, 0.5);
+        }
+
+        .btn-action {
+            padding: 12px 20px;
+            border-radius: 25px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+            font-size: 14px;
+        }
+
+        .btn-save { background: #2ed573; color: white; }
+        .btn-retry { background: #ff4757; color: white; }
+
+    </style>
+</head>
+<body>
+
+    <div class="camera-box">
+        <video id="video" autoplay playsinline></video>
+        <img id="photo-result" alt="Pratinjau">
+    </div>
+
+    <div class="controls">
+        <button id="retryBtn" class="btn-action btn-retry">ULANGI</button>
+        <button id="snapBtn" class="btn-snap"></button>
+        <button id="saveBtn" class="btn-action btn-save">SIMPAN KE GALERI</button>
+    </div>
+
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const snapBtn = document.getElementById('snapBtn');
+        const retryBtn = document.getElementById('retryBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const photoResult = document.getElementById('photo-result');
+
+        async function init() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user", width: 1280, height: 720 } 
+                });
+                video.srcObject = stream;
+            } catch (err) {
+                alert("Izin kamera ditolak, sayang.");
+            }
+        }
+
+        // Ambil Foto (Pratinjau)
+        snapBtn.onclick = () => {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const dataURL = canvas.toDataURL('image/png');
+            photoResult.src = dataURL;
+            
+            // Sembunyikan video, tampilkan hasil
+            video.style.display = 'none';
+            photoResult.style.display = 'block';
+            
+            // Atur tombol
+            snapBtn.style.display = 'none';
+            retryBtn.style.display = 'block';
+            saveBtn.style.display = 'block';
+        };
+
+        // Ulangi Foto
+        retryBtn.onclick = () => {
+            video.style.display = 'block';
+            photoResult.style.display = 'none';
+            snapBtn.style.display = 'block';
+            retryBtn.style.display = 'none';
+            saveBtn.style.display = 'none';
+        };
+
+        // Simpan Foto
+        saveBtn.onclick = () => {
+            const link = document.createElement('a');
+            link.href = photoResult.src;
+            link.download = `ORI_Photo_${Date.now()}.png`;
+            link.click();
+        };
+
+        init();
+    </script>
+</body>
+</html>
