@@ -18,32 +18,29 @@
             align-items: center;
         }
 
-        /* Container 3:4 Tegak (Portrait) */
+        /* Container 3:4 Tegak yang pasti pas di HP */
         #camera-wrapper {
             width: 100vw;
             height: calc(100vw * 4 / 3); 
-            max-height: 80vh;
-            position: relative;
             background: #111;
+            position: relative;
             overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
         video {
             width: 100%;
             height: 100%;
-            object-fit: fill; 
+            /* Menggunakan cover agar layar penuh tapi tetap dalam rasio 3:4 */
+            object-fit: cover; 
         }
 
         .controls {
             flex: 1;
             width: 100%;
-            background: #000;
             display: flex;
             justify-content: center;
             align-items: center;
+            background: #000;
         }
 
         #snap {
@@ -54,11 +51,7 @@
             background: #ff4444;
             cursor: pointer;
             box-shadow: 0 0 15px rgba(255, 68, 68, 0.4);
-            pointer-events: auto;
         }
-
-        #snap:active { transform: scale(0.9); }
-        canvas { display: none; }
     </style>
 </head>
 <body>
@@ -71,20 +64,18 @@
     <button id="snap" type="button"></button>
 </div>
 
-<canvas id="canvas"></canvas>
+<canvas id="canvas" style="display:none;"></canvas>
 
 <script>
     const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const snap = document.getElementById('snap');
 
     async function init() {
-        // Minta resolusi 3:4 Portrait (Lebar < Tinggi)
+        // Kuncinya ada di sini: Tinggi harus lebih besar dari Lebar untuk 3:4 tegak
         const constraints = {
             video: {
                 facingMode: "user",
-                width: { ideal: 1440 }, 
-                height: { ideal: 1920 },
+                width: { ideal: 720 },
+                height: { ideal: 960 },
                 aspectRatio: 0.75
             },
             audio: false
@@ -94,24 +85,23 @@
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
             video.srcObject = stream;
         } catch (e) {
-            alert("izin kamera bermasalah: " + e);
+            alert("kamera gagal: " + e);
         }
     }
 
-    snap.onclick = function() {
+    document.getElementById('snap').onclick = function() {
+        const canvas = document.getElementById('canvas');
         const context = canvas.getContext('2d');
+        
+        // Memastikan hasil jepretan sama persis dengan yang di layar
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        const imgData = canvas.toDataURL('image/png');
         const link = document.createElement('a');
-        link.href = imgData;
         link.download = `ORICamera_${Date.now()}.png`;
-        
-        document.body.appendChild(link);
+        link.href = canvas.toDataURL('image/png');
         link.click();
-        document.body.removeChild(link);
     };
 
     window.onload = init;
