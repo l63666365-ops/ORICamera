@@ -18,11 +18,11 @@
             align-items: center;
         }
 
-        /* Container Kamera 3:4 yang sesungguhnya */
+        /* Container 3:4 Sebenarnya */
         #camera-wrapper {
-            width: 100vw;
-            height: calc(100vw * 4 / 3); /* Paksa tinggi sesuai rasio lebar */
-            max-height: 80vh; 
+            width: 100%;
+            aspect-ratio: 3 / 4;
+            max-height: 75vh;
             position: relative;
             background: #111;
             overflow: hidden;
@@ -32,11 +32,10 @@
         }
 
         video {
-            /* Menghilangkan 'cover' agar tidak dicrop */
             width: 100%;
             height: 100%;
-            object-fit: contain; 
-            background: #000;
+            /* Menggunakan fill agar sensor asli dipaksa masuk ke kotak 3:4 */
+            object-fit: fill; 
         }
 
         .controls {
@@ -46,16 +45,24 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            z-index: 100;
         }
 
         #snap {
-            width: 70px;
-            height: 70px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
-            border: 5px solid #fff;
-            background: radial-gradient(circle, #ff4444 0%, #990000 100%);
+            border: 6px solid #fff;
+            background: #ff4444;
             cursor: pointer;
+            box-shadow: 0 0 20px rgba(255, 68, 68, 0.4);
+            /* Memastikan area sentuh aktif */
+            pointer-events: auto; 
+            -webkit-tap-highlight-color: transparent;
         }
+
+        #snap:active { transform: scale(0.9); background: #cc0000; }
+        canvas { display: none; }
     </style>
 </head>
 <body>
@@ -65,19 +72,21 @@
 </div>
 
 <div class="controls">
-    <button id="snap"></button>
+    <button id="snap" type="button"></button>
 </div>
 
-<canvas id="canvas" style="display:none;"></canvas>
+<canvas id="canvas"></canvas>
 
 <script>
     const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const snap = document.getElementById('snap');
 
     async function init() {
+        // Meminta resolusi sensor 3:4 yang luas
         const constraints = {
             video: {
                 facingMode: "user",
-                // Kita minta resolusi tinggi dengan aspek rasio 3:4 asli
                 width: { ideal: 1440 }, 
                 height: { ideal: 1920 },
                 aspectRatio: 0.75
@@ -89,24 +98,33 @@
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
             video.srcObject = stream;
         } catch (e) {
-            alert("error sensor: " + e);
+            alert("izin kamera bermasalah: " + e);
         }
     }
 
-    document.getElementById('snap').addEventListener('click', () => {
-        const canvas = document.getElementById('canvas');
+    // Perbaikan fungsi tombol jepret
+    snap.onclick = function(e) {
+        e.preventDefault();
         const context = canvas.getContext('2d');
+        
+        // Ambil resolusi asli dari aliran video
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0);
         
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        const imgData = canvas.toDataURL('image/png');
         const link = document.createElement('a');
+        link.href = imgData;
         link.download = `ORICamera_${Date.now()}.png`;
-        link.href = canvas.toDataURL();
+        
+        document.body.appendChild(link);
         link.click();
-    });
+        document.body.removeChild(link);
+    };
 
-    init();
+    // Pastikan inisialisasi jalan setelah halaman siap
+    window.onload = init;
 </script>
 </body>
 </html>
